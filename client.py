@@ -1,5 +1,6 @@
 # Pushy example client
 # Written by Somsubhra
+# (You can also use telnet)
 
 # All imports
 import socket
