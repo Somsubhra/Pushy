@@ -5,34 +5,40 @@
 import socket
 import select
 import sqlite3
+import hashlib
 
 
 class Pushy:
 
 
   # Constructor for the Pushy server
-  def __init__(self, host, port, recv_buffer_size):
+  def __init__(self, host, port, recv_buffer_size, db_name):
 
     self.host = host
     self.port = port
     self.recv_buffer_size = recv_buffer_size
+    self.db_name = db_name
 
     # Setup database
     try:
-      self.db = sqlite3.connect('pushy_data.db')
-      self.db_cursor = db.cursor()
+      db = sqlite3.connect(self.db_name)
+      db_cursor = db.cursor()
       query = '''
         CREATE TABLE IF NOT EXISTS channel (
           id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL
+          name TEXT NOT NULL,
+          password TEXT NOT NULL
         )
       '''
-      self.db_cursor.execute(query)
-      self.db.commit()
+      db_cursor.execute(query)
+      db.commit()
+
     except Exception as e:
-      self.db.rollback()
+      db.rollback()
+      print str(e)
+
     finally:
-      self.db.close()
+      db.close()
 
     # Set up Pushy server's socket
     self.connection_list = []
@@ -112,15 +118,44 @@ class Pushy:
 
   # Register command
   def register(self, args):
+
+    if len(args) < 3:
+      print "Usage: /reg <id> <name> <pass>"
+      return
+
     print "Registering " + str(args)
 
+    try:
+      db = sqlite3.connect(self.db_name)
+      db_cursor = db.cursor()
+
+      query = '''
+      INSERT INTO channel(id, name, password)
+      VALUES(?, ?, ?)
+      '''
+
+      sha = hashlib.sha1()
+      sha.update(args[2])
+
+      db_cursor.execute(query, (args[0], args[1], sha.hexdigest()))
+      db.commit()
+
+    except Exception as e:
+      db.rollback()
+      print str(e)
+
+    finally:
+      db.close()
+
+
+  # Identify command
   def identify(self, args):
     print "Identifying " + str(args)
 
 
 # The main method of the program
 def main():
-  pushy_server = Pushy("0.0.0.0", 5000, 4096)
+  pushy_server = Pushy("0.0.0.0", 5000, 4096, 'pushy_data.db')
   pushy_server.run()
 
 
