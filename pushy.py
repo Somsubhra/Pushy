@@ -99,6 +99,24 @@ class Pushy:
 
     print "Executing " + command + " command with args " + str(args)
 
+    commands = {
+      'reg': self.register,
+      'id': self.identify
+    }
+
+    if command in commands:
+      commands[command](args)
+    else:
+      print "Invalid command"
+
+
+  # Register command
+  def register(self, args):
+    print "Registering " + str(args)
+
+  def identify(self, args):
+    print "Identifying " + str(args)
+
 
 # The main method of the program
 def main():
