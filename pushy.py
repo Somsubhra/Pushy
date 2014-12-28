@@ -69,7 +69,9 @@ class Pushy:
             data = sock.recv(self.recv_buffer_size)
             if data:
               print "New message from" + str(sock.getpeername()) + ": " + data
-              print self.is_command(data)
+
+              if self.is_command(data):
+                self.exec_command(data)
 
           except:
             print "Client (%s, %s) disconnected from Pushy" % addr
@@ -82,6 +84,20 @@ class Pushy:
   # Return whether the message is a command or not
   def is_command(self, message):
     return message[0] == '/'
+
+  # Execute the command
+  def exec_command(self, message):
+    message = message.split()
+
+    command = message[0]
+    command = command[1:]
+
+    args = []
+
+    if len(message) > 1:
+      args = message[1:]
+
+    print "Executing " + command + " command with args " + str(args)
 
 
 # The main method of the program
