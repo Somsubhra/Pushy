@@ -8,7 +8,7 @@ import sqlite3
 
 # The main method of the program
 def main():
-  
+
   # Setup database
   try:
     db = sqlite3.connect('pushy_data.db')
@@ -25,7 +25,7 @@ def main():
     db.rollback()
   finally:
     db.close()
-  
+
   # Socket descriptors
   connection_list = []
   recv_buffer = 4096
