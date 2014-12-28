@@ -4,9 +4,27 @@
 # All imports
 import socket
 import select
+import sqlite3
 
 # The main method of the program
 def main():
+  
+  # Setup database
+  try:
+    db = sqlite3.connect('pushy_data.db')
+    db_cursor = db.cursor()
+    query = '''
+      CREATE TABLE IF NOT EXISTS channel (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL
+      )
+    '''
+    db_cursor.execute(query)
+    db.commit()
+  except Exception as e:
+    db.rollback()
+  finally:
+    db.close()
   
   # Socket descriptors
   connection_list = []
