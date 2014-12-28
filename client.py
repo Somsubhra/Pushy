@@ -2,7 +2,10 @@
 # Written by Somsubhra
 
 # All imports
-import socket, select, string, sys
+import socket
+import select
+import string
+import sys
  
  # Message prompt
 def prompt():

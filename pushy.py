@@ -2,7 +2,8 @@
 # Written by Somsubhra
 
 # All imports
-import socket, select
+import socket
+import select
 
 # The main method of the program
 def main():
