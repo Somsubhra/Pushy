@@ -6,6 +6,11 @@ import socket
 import select
 import sqlite3
 
+# Return whether the message
+# is a command or not
+def is_command(message):
+  return message[0] == '/'
+
 # The main method of the program
 def main():
 
@@ -57,6 +62,7 @@ def main():
           data = sock.recv(recv_buffer)
           if data:
             print "New message from" + str(sock.getpeername()) + ": " + data
+
         except:
           print "Client (%s, %s) disconnected from Pushy" % addr
           sock.close()
