@@ -58,7 +58,7 @@ class Pushy:
 
     except Exception as e:
       db.rollback()
-      print str(e)
+      print "Error: " + str(e)
 
     finally:
       db.close()
@@ -77,7 +77,7 @@ class Pushy:
 
   # The main loop of Pushy server
   def run(self):
-    print "Pushy listening on port " + str(self.port)
+    print "-- Pushy listening on port " + str(self.port)
 
     while True:
 
@@ -90,7 +90,7 @@ class Pushy:
           # Accept incoming connections to server
           sockfd, addr = self.server_socket.accept()
           self.connection_list.append(sockfd)
-          print "Client (%s %s) connected to Pushy" % addr
+          print "-- Client (%s %s) connected to Pushy" % addr
 
         else:
 
@@ -98,13 +98,13 @@ class Pushy:
           try:
             data = sock.recv(self.recv_buffer_size)
             if data:
-              print "New message from" + str(sock.getpeername()) + ": " + data
+              print "-- New message from" + str(sock.getpeername()) + ": " + data
 
               if self.is_command(data):
                 self.exec_command(data, sock)
 
           except:
-            print "Client (%s, %s) disconnected from Pushy" % addr
+            print "-- Client (%s, %s) disconnected from Pushy" % addr
             sock.close()
             self.connection_list.remove(sock)
             self.identified_connections.pop(sock)
@@ -129,7 +129,7 @@ class Pushy:
     if len(message) > 1:
       args = message[1:]
 
-    print "Executing " + command + " command with args " + str(args)
+    print "-- Executing " + command + " command with args " + str(args)
 
     commands = {
       'reg': self.register,
@@ -141,7 +141,7 @@ class Pushy:
     if command in commands:
       commands[command](args, socket)
     else:
-      print "Invalid command"
+      print "Error: Invalid command"
 
 
   # Register command
@@ -151,7 +151,7 @@ class Pushy:
       print "Usage: /reg <id> <name> <pass>"
       return
 
-    print "Registering " + str(args)
+    print "-- Registering " + str(args)
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -167,10 +167,11 @@ class Pushy:
 
       db_cursor.execute(query, (args[0], args[1], sha.hexdigest()))
       db.commit()
+      print "-- Registered channel " + args[0]
 
     except Exception as e:
       db.rollback()
-      print str(e)
+      print "Error: " + str(e)
 
     finally:
       db.close()
@@ -183,7 +184,7 @@ class Pushy:
       print "Usage: /id <channel_id> <password>"
       return
 
-    print "Identifying " + str(args)
+    print "-- Identifying " + str(args)
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -207,11 +208,11 @@ class Pushy:
       for row in channel:
         channel_id = row[0]
         self.identified_connections[socket] = str(channel_id)
-        print "Channel " + str(channel_id) + " identified"
+        print "-- Channel " + str(channel_id) + " identified"
 
     except Exception as e:
       db.rollback()
-      print str(e)
+      print "Error: " + str(e)
 
     finally:
       db.close()
@@ -219,7 +220,7 @@ class Pushy:
 
   # Publish to channel
   def publish(self, args, socket):
-    print "Publishing " + str(args)
+    print "-- Publishing " + str(args)
 
 
   # Subscribe to channel
@@ -233,7 +234,7 @@ class Pushy:
       print "Usage: /sub <publisher_id>"
       return
 
-    print "Subscribing " + str(args)
+    print "-- Subscribing " + str(args)
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -246,10 +247,11 @@ class Pushy:
 
       db_cursor.execute(query, (args[0], self.identified_connections[socket]))
       db.commit()
+      print "-- Subscribed to channel " + args[0]
 
     except Exception as e:
       db.rollback()
-      print str(e)
+      print "Error: " + str(e)
 
     finally:
       db.close()
@@ -261,8 +263,8 @@ class Pushy:
 
   # Shut down the push server
   def shut_down(self, signal, frame):
-    print "\nCtrl+C caught"
-    print "Pushy server exiting gracefully"
+    print "\n-- Ctrl+C caught"
+    print "-- Pushy server exiting gracefully"
     sys.exit(0)
 
 
