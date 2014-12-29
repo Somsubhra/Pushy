@@ -32,7 +32,7 @@ def main():
     print 'Unable to connect'
     sys.exit()
 
-  print 'Connected to Pushy server. Start sending messages\n'
+  print 'Connected to Pushy server. Start sending messages'
   prompt()
 
   while True:

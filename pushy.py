@@ -6,6 +6,8 @@ import socket
 import select
 import sqlite3
 import hashlib
+import signal
+import sys
 
 
 class Pushy:
@@ -18,6 +20,9 @@ class Pushy:
     self.port = port
     self.recv_buffer_size = recv_buffer_size
     self.db_name = db_name
+
+    # Signal handers
+    signal.signal(signal.SIGINT, self.shut_down)
 
     # Setup database
     try:
@@ -177,6 +182,10 @@ class Pushy:
   def subscribe(self, args):
     print "Subscribing " + str(args)
 
+  def shut_down(self, signal, frame):
+    print "\nCtrl+C caught"
+    print "Pushy server exiting gracefully"
+    sys.exit(0)
 
 # The main method of the program
 def main():
