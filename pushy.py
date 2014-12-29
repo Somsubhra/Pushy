@@ -65,6 +65,7 @@ class Pushy:
 
     # Set up Pushy server's socket
     self.connection_list = []
+    self.identified_connections = {}
 
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -100,22 +101,24 @@ class Pushy:
               print "New message from" + str(sock.getpeername()) + ": " + data
 
               if self.is_command(data):
-                self.exec_command(data)
+                self.exec_command(data, sock)
 
           except:
             print "Client (%s, %s) disconnected from Pushy" % addr
             sock.close()
             self.connection_list.remove(sock)
+            self.identified_connections.pop(sock)
             continue
 
     self.server_socket.close()
+
 
   # Return whether the message is a command or not
   def is_command(self, message):
     return message[0] == '/'
 
   # Execute the command
-  def exec_command(self, message):
+  def exec_command(self, message, socket):
     message = message.split()
 
     command = message[0]
@@ -136,13 +139,13 @@ class Pushy:
     }
 
     if command in commands:
-      commands[command](args)
+      commands[command](args, socket)
     else:
       print "Invalid command"
 
 
   # Register command
-  def register(self, args):
+  def register(self, args, socket):
 
     if len(args) < 3:
       print "Usage: /reg <id> <name> <pass>"
@@ -174,18 +177,24 @@ class Pushy:
 
 
   # Identify command
-  def identify(self, args):
+  def identify(self, args, socket):
     print "Identifying " + str(args)
 
+
   # Publish to channel
-  def publish(self, args):
+  def publish(self, args, socket):
     print "Publishing " + str(args)
 
+
   # Subscribe to channel
-  def subscribe(self, args):
+  def subscribe(self, args, socket):
+
+    if not self.is_identified_connection(socket):
+      print "Error: Need to be identified first"
+      return
 
     if len(args) < 2:
-      print "Usage: /sub <publisher_id> <subscriber_id>"
+      print "Usage: /sub <publisher_id>"
       return
 
     print "Subscribing " + str(args)
@@ -199,7 +208,7 @@ class Pushy:
         VALUES(?, ?)
       '''
 
-      db_cursor.execute(query, (args[0], args[1]))
+      db_cursor.execute(query, (args[0], self.identified_connections[socket]))
       db.commit()
 
     except Exception as e:
@@ -209,10 +218,17 @@ class Pushy:
     finally:
       db.close()
 
+  # Check if connection is identified
+  def is_identified_connection(self, socket):
+    return socket in self.identified_connections
+
+
+  # Shut down the push server
   def shut_down(self, signal, frame):
     print "\nCtrl+C caught"
     print "Pushy server exiting gracefully"
     sys.exit(0)
+
 
 # The main method of the program
 def main():
