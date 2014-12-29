@@ -152,8 +152,8 @@ class Pushy:
       db_cursor = db.cursor()
 
       query = '''
-      INSERT INTO channel(id, name, password)
-      VALUES(?, ?, ?)
+        INSERT INTO channel(id, name, password)
+        VALUES(?, ?, ?)
       '''
 
       sha = hashlib.sha1()
@@ -180,7 +180,31 @@ class Pushy:
 
   # Subscribe to channel
   def subscribe(self, args):
+
+    if len(args) < 2:
+      print "Usage: /sub <publisher_id> <subscriber_id>"
+      return
+
     print "Subscribing " + str(args)
+
+    try:
+      db = sqlite3.connect(self.db_name)
+      db_cursor = db.cursor()
+
+      query = '''
+        INSERT INTO subscriber(publisher_id, subscriber_id)
+        VALUES(?, ?)
+      '''
+
+      db_cursor.execute(query, (args[0], args[1]))
+      db.commit()
+
+    except Exception as e:
+      db.rollback()
+      print str(e)
+
+    finally:
+      db.close()
 
   def shut_down(self, signal, frame):
     print "\nCtrl+C caught"
