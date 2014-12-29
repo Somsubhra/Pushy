@@ -23,11 +23,26 @@ class Pushy:
     try:
       db = sqlite3.connect(self.db_name)
       db_cursor = db.cursor()
+
+      # Set up the channels table
       query = '''
         CREATE TABLE IF NOT EXISTS channel (
           id INTEGER PRIMARY KEY,
           name TEXT NOT NULL,
           password TEXT NOT NULL
+        )
+      '''
+      db_cursor.execute(query)
+      db.commit()
+
+      # Set up the subscribers table
+      query = '''
+        CREATE TABLE IF NOT EXISTS subscriber (
+          publisher_id INTEGER NOT NULL,
+          subscriber_id INTEGER NOT NULL,
+          PRIMARY KEY (publisher_id, subscriber_id),
+          FOREIGN KEY (publisher_id) REFERENCES channel(id),
+          FOREIGN KEY (subscriber_id) REFERENCES channel(id)
         )
       '''
       db_cursor.execute(query)
