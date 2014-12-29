@@ -107,7 +107,9 @@ class Pushy:
 
     commands = {
       'reg': self.register,
-      'id': self.identify
+      'id': self.identify,
+      'pub': self.publish,
+      'sub': self.subscribe
     }
 
     if command in commands:
@@ -151,6 +153,14 @@ class Pushy:
   # Identify command
   def identify(self, args):
     print "Identifying " + str(args)
+
+  # Publish to channel
+  def publish(self, args):
+    print "Publishing " + str(args)
+
+  # Subscribe to channel
+  def subscribe(self, args):
+    print "Subscribing " + str(args)
 
 
 # The main method of the program
