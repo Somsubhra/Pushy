@@ -178,7 +178,43 @@ class Pushy:
 
   # Identify command
   def identify(self, args, socket):
+
+    if len(args) < 2:
+      print "Usage: /id <channel_id> <password>"
+      return
+
     print "Identifying " + str(args)
+
+    try:
+      db = sqlite3.connect(self.db_name)
+      db_cursor = db.cursor()
+
+      query = '''
+        SELECT id FROM channel
+        WHERE id=? AND password=?
+      '''
+
+      sha = hashlib.sha1()
+      sha.update(args[1])
+
+      db_cursor.execute(query, (args[0], sha.hexdigest()))
+      channel = db_cursor.fetchall()
+
+      if len(channel) != 1:
+        print "Error: Identification failure"
+        return
+
+      for row in channel:
+        channel_id = row[0]
+        self.identified_connections[socket] = str(channel_id)
+        print "Channel " + str(channel_id) + " identified"
+
+    except Exception as e:
+      db.rollback()
+      print str(e)
+
+    finally:
+      db.close()
 
 
   # Publish to channel
@@ -193,7 +229,7 @@ class Pushy:
       print "Error: Need to be identified first"
       return
 
-    if len(args) < 2:
+    if len(args) < 1:
       print "Usage: /sub <publisher_id>"
       return
 
