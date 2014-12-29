@@ -32,9 +32,11 @@ class Pushy:
       # Set up the channels table
       query = '''
         CREATE TABLE IF NOT EXISTS channel (
-          id INTEGER PRIMARY KEY,
+          id INTEGER NOT NULL,
           name TEXT NOT NULL,
-          password TEXT NOT NULL
+          password TEXT NOT NULL,
+          creation_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id)
         )
       '''
       db_cursor.execute(query)
@@ -45,6 +47,7 @@ class Pushy:
         CREATE TABLE IF NOT EXISTS subscriber (
           publisher_id INTEGER NOT NULL,
           subscriber_id INTEGER NOT NULL,
+          subscription_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (publisher_id, subscriber_id),
           FOREIGN KEY (publisher_id) REFERENCES channel(id),
           FOREIGN KEY (subscriber_id) REFERENCES channel(id)
