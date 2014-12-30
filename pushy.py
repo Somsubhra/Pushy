@@ -98,7 +98,7 @@ class Pushy:
           try:
             data = sock.recv(self.recv_buffer_size)
             if data:
-              print "-- New message from" + str(sock.getpeername()) + ": " + data
+              print "-- New message from" + str(sock.getpeername())
 
               if self.is_command(data):
                 self.exec_command(data, sock)
@@ -301,9 +301,6 @@ class Pushy:
   def message_clients(self, message, subscriber_ids, publisher_id):
 
     message = str(publisher_id) + ": " + message
-
-    print message
-    print subscriber_ids
 
     for socket in self.identified_connections:
 

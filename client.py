@@ -51,7 +51,7 @@ def main():
           print '\nDisconnected from Pushy server'
           sys.exit()
         else :
-          sys.stdout.write(data)
+          sys.stdout.write(data + "\n")
           prompt()
 
       else :
