@@ -12,9 +12,10 @@ import sys
 
 class Pushy:
 
-
   # Constructor for the Pushy server
   def __init__(self, host, port, recv_buffer_size, db_name):
+
+    self.console_show_message("Starting Pushy push server")
 
     self.host = host
     self.port = port
@@ -58,7 +59,7 @@ class Pushy:
 
     except Exception as e:
       db.rollback()
-      print "Error: " + str(e)
+      self.console_show_error(str(e))
 
     finally:
       db.close()
@@ -77,7 +78,8 @@ class Pushy:
 
   # The main loop of Pushy server
   def run(self):
-    print "-- Pushy listening on port " + str(self.port)
+
+    self.console_show_success("Pushy listening on port " + str(self.port))
 
     while True:
 
@@ -90,7 +92,7 @@ class Pushy:
           # Accept incoming connections to server
           sockfd, addr = self.server_socket.accept()
           self.connection_list.append(sockfd)
-          print "-- Client (%s %s) connected to Pushy" % addr
+          self.console_show_message("Client " + str(addr) + " connected to Pushy")
 
         else:
 
@@ -98,13 +100,13 @@ class Pushy:
           try:
             data = sock.recv(self.recv_buffer_size)
             if data:
-              print "-- New message from" + str(sock.getpeername())
+              self.console_show_message("New message from" + str(sock.getpeername()))
 
               if self.is_command(data):
                 self.exec_command(data, sock)
 
           except:
-            print "-- Client (%s, %s) disconnected from Pushy" % addr
+            self.console_show_message("Client " + str(addr) + " disconnected from Pushy")
             sock.close()
             self.connection_list.remove(sock)
             self.identified_connections.pop(sock)
@@ -129,7 +131,7 @@ class Pushy:
     if len(message) > 1:
       args = message[1:]
 
-    print "-- Executing " + command + " command with args " + str(args)
+    self.console_show_message("Executing " + command + " command with args " + str(args))
 
     commands = {
       'reg': self.register,
@@ -141,17 +143,17 @@ class Pushy:
     if command in commands:
       commands[command](args, socket)
     else:
-      print "Error: Invalid command"
+      self.console_show_error("Invalid command")
 
 
   # Register command
   def register(self, args, socket):
 
     if len(args) < 3:
-      print "Usage: /reg <id> <name> <pass>"
+      self.console_show_usage("/reg <id> <name> <pass>")
       return
 
-    print "-- Registering " + str(args)
+    self.console_show_message("Registering " + str(args))
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -167,11 +169,11 @@ class Pushy:
 
       db_cursor.execute(query, (args[0], args[1], sha.hexdigest()))
       db.commit()
-      print "-- Registered channel " + args[0]
+      self.console_show_success("Registered channel " + args[0])
 
     except Exception as e:
       db.rollback()
-      print "Error: " + str(e)
+      self.console_show_error(str(e))
 
     finally:
       db.close()
@@ -181,10 +183,10 @@ class Pushy:
   def identify(self, args, socket):
 
     if len(args) < 2:
-      print "Usage: /id <channel_id> <password>"
+      self.console_show_usage("/id <channel_id> <password>")
       return
 
-    print "-- Identifying " + str(args)
+    self.console_show_message("Identifying " + str(args))
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -202,17 +204,17 @@ class Pushy:
       channel = db_cursor.fetchall()
 
       if len(channel) != 1:
-        print "Error: Identification failure"
+        self.console_show_error("Identification failure")
         return
 
       for row in channel:
         channel_id = row[0]
         self.identified_connections[socket] = str(channel_id)
-        print "-- Channel " + str(channel_id) + " identified"
+        self.console_show_success("Channel " + str(channel_id) + " identified")
 
     except Exception as e:
       db.rollback()
-      print "Error: " + str(e)
+      self.console_show_error(str(e))
 
     finally:
       db.close()
@@ -222,17 +224,17 @@ class Pushy:
   def publish(self, args, socket):
 
     if not self.is_identified_connection(socket):
-      print "Error: Need to be identified first"
+      self.console_show_error("Need to be identified first")
       return
 
     if len(args) < 1:
-      print "Usage: /pub <your_message>"
+      self.console_show_usage("/pub <your_message>")
       return
 
     publisher_id = self.identified_connections[socket]
     message = ' '.join(args)
 
-    print "-- Publishing " + str(args)
+    self.console_show_message("Publishing " + str(args))
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -253,11 +255,11 @@ class Pushy:
 
       self.message_clients(message, subscribers, publisher_id)
 
-      print "-- Published message to subscribers"
+      self.console_show_success("Published message to subscribers")
 
     except Exception as e:
       db.rollback()
-      print "Error: " + str(e)
+      self.console_show_error(str(e))
 
     finally:
       db.close()
@@ -267,14 +269,14 @@ class Pushy:
   def subscribe(self, args, socket):
 
     if not self.is_identified_connection(socket):
-      print "Error: Need to be identified first"
+      self.console_show_error("Need to be identified first")
       return
 
     if len(args) < 1:
-      print "Usage: /sub <publisher_id>"
+      self.console_show_usage("/sub <publisher_id>")
       return
 
-    print "-- Subscribing " + str(args)
+    self.console_show_message("Subscribing " + str(args))
 
     try:
       db = sqlite3.connect(self.db_name)
@@ -287,11 +289,11 @@ class Pushy:
 
       db_cursor.execute(query, (args[0], self.identified_connections[socket]))
       db.commit()
-      print "-- Subscribed to channel " + args[0]
+      self.console_show_success("Subscribed to channel " + args[0])
 
     except Exception as e:
       db.rollback()
-      print "Error: " + str(e)
+      self.console_show_error(str(e))
 
     finally:
       db.close()
@@ -322,9 +324,29 @@ class Pushy:
 
   # Shut down the push server
   def shut_down(self, signal, frame):
-    print "\n-- Ctrl+C caught"
-    print "-- Pushy server exiting gracefully"
+    self.console_show_message("Ctrl+C caught, exiting")
+    self.console_show_success("Pushy server exiting gracefully")
     sys.exit(0)
+
+
+  # Show error message on console
+  def console_show_error(self, message):
+    print "\033[91m" + "Error: " + message + "\033[0m"
+
+
+  # Show success message on console
+  def console_show_success(self, message):
+    print "\033[92m" + "Success: " + message + "\033[0m"
+
+
+  # Show message on console
+  def console_show_message(self, message):
+    print "\033[94m" + "-- " + message + "\033[0m"
+
+
+  # Show command usage on console
+  def console_show_usage(self, message):
+    print "\033[93m" + "Usage: " + message + "\033[0m"
 
 
 # The main method of the program
