@@ -220,7 +220,47 @@ class Pushy:
 
   # Publish to channel
   def publish(self, args, socket):
+
+    if not self.is_identified_connection(socket):
+      print "Error: Need to be identified first"
+      return
+
+    if len(args) < 1:
+      print "Usage: /pub <your_message>"
+      return
+
+    publisher_id = self.identified_connections[socket]
+    message = ' '.join(args)
+
     print "-- Publishing " + str(args)
+
+    try:
+      db = sqlite3.connect(self.db_name)
+      db_cursor = db.cursor()
+
+      query = '''
+        SELECT subscriber_id FROM subscriber
+        WHERE publisher_id=?
+      '''
+
+      db_cursor.execute(query, (publisher_id,))
+      subscriber_ids = db_cursor.fetchall()
+
+      subscribers = []
+
+      for subscriber_id in subscriber_ids:
+        subscribers.append(str(subscriber_id[0]))
+
+      self.message_clients(message, subscribers, publisher_id)
+
+      print "-- Published message to subscribers"
+
+    except Exception as e:
+      db.rollback()
+      print "Error: " + str(e)
+
+    finally:
+      db.close()
 
 
   # Subscribe to channel
@@ -255,6 +295,28 @@ class Pushy:
 
     finally:
       db.close()
+
+
+  # Send message to clients
+  def message_clients(self, message, subscriber_ids, publisher_id):
+
+    message = str(publisher_id) + ": " + message
+
+    print message
+    print subscriber_ids
+
+    for socket in self.identified_connections:
+
+      if self.identified_connections[socket] in subscriber_ids:
+
+        try:
+          socket.send(message)
+
+        except:
+          socket.close()
+          self.connection_list.remove(socket)
+          self.identified_connections.pop(socket)
+
 
   # Check if connection is identified
   def is_identified_connection(self, socket):
